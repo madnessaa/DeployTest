@@ -1,0 +1,29 @@
+$storageAccount = "_storageAcc_"
+$storageKey = "_storageAccKey_"
+$containerName = "_containerName_"
+$dir = "_myDir_"
+if ($Env:TF_BUILD_SOURCESDIRECTORY)
+{
+  $dir = $Env:TF_BUILD_SOURCESDIRECTORY + $dir
+}
+
+$context = New-AzureStorageContext  –StorageAccountName $storageAccount
+                                    -StorageAccountKey $storageKey
+
+# Set the ContentType and optionally the CacheControl
+#$properties = @{
+#  "ContentType" = "application/javascript";
+#  "CacheControl" = "public, max-age=31536000";
+#}
+
+$files = Get-ChildItem $dir -force | Where-Object {$_.FullName.EndsWith(".html")}
+foreach ($file in $files)
+{
+  $fqName = $dir + '\' + $file.Name
+  Set-AzureStorageBlobContent -Blob $file.Name
+                              -Container $containerName
+                              -File $fqName
+                              -Context $context
+                              -Properties $properties
+                              -Force
+}
